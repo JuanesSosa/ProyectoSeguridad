@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resultados – Proyecto 03</title>
+  <style>
+    :root { --bg:#12161c; --card:#1b222c; --ink:#f0f2f4; --muted:#9aa4b2; --green:#39d353; --amber:#f2a65a; --track:#2a3342; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--ink);
+           font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding:16px; }
+    main { width:100%; max-width:560px; background:var(--card); border-radius:14px; padding:28px; }
+    h1 { margin:0 0 4px; font-size:1.5rem; }
+    p.sub { margin:0 0 24px; color:var(--muted); }
+    .row { margin-bottom:18px; }
+    .row .label { display:flex; justify-content:space-between; font-weight:600; margin-bottom:6px; }
+    .track { background:var(--track); border-radius:8px; height:22px; overflow:hidden; }
+    .bar { height:100%; width:0; background:var(--green); transition:width .4s ease; }
+    .row:nth-child(2) .bar { background:var(--amber); }
+    h2 { font-size:1rem; margin:26px 0 8px; color:var(--muted); font-weight:600; }
+    ul { list-style:none; padding:0; margin:0; font-family: ui-monospace, Consolas, monospace; font-size:.85rem; color:var(--muted); }
+    li { padding:4px 0; }
+    .warn { color:var(--amber); font-size:.85rem; margin-top:12px; }
+    footer { margin-top:24px; font-size:.8rem; color:var(--muted); }
+    a { color:var(--green); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Resultados</h1>
+    <p class="sub">Servicio en Node.js · datos de PostgreSQL y MongoDB</p>
+    <div id="bars"></div>
+    <p id="total" class="sub"></p>
+    <h2>Últimos eventos procesados (MongoDB)</h2>
+    <ul id="events"><li>Sin eventos todavía</li></ul>
+    <p id="warn" class="warn" hidden></p>
+    <footer><a href="http://localhost:5000" target="_blank" rel="noopener">Ir a votar</a></footer>
+  </main>
+  <script>
+    const bars = document.getElementById("bars");
+    const events = document.getElementById("events");
+    const total = document.getElementById("total");
+    const warn = document.getElementById("warn");
+
+    function render(data) {
+      const sum = data.options.reduce((s, o) => s + (data.counts[o] || 0), 0);
+      bars.innerHTML = "";
+      data.options.forEach((opt) => {
+        const n = data.counts[opt] || 0;
+        const pct = sum ? Math.round((n / sum) * 100) : 0;
+        const row = document.createElement("div");
+        row.className = "row";
+        const label = document.createElement("div");
+        label.className = "label";
+        const name = document.createElement("span");
+        name.textContent = opt;
+        const value = document.createElement("span");
+        value.textContent = n + " (" + pct + "%)";
+        label.append(name, value);
+        const track = document.createElement("div");
+        track.className = "track";
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.width = pct + "%";
+        track.append(bar);
+        row.append(label, track);
+        bars.append(row);
+      });
+      total.textContent = sum + (sum === 1 ? " voto en total" : " votos en total");
+
+      events.innerHTML = "";
+      if (!data.events.length) {
+        const li = document.createElement("li");
+        li.textContent = "Sin eventos todavía";
+        events.append(li);
+      }
+      data.events.forEach((e) => {
+        const li = document.createElement("li");
+        const t = new Date(e.processed_at * 1000).toLocaleTimeString();
+        li.textContent = t + "  " + String(e.voter_id).slice(0, 8) + " → " + e.vote;
+        events.append(li);
+      });
+      warn.hidden = true;
+    }
+
+    async function refresh() {
+      try {
+        const res = await fetch("/api/results");
+        const data = await res.json();
+        render(data);
+        if (data.errors.length && !data.events.length && !Object.keys(data.counts).length) {
+          warn.hidden = false;
+          warn.textContent = "Aún no hay datos (se crean al procesar el primer voto).";
+        }
+      } catch (err) {
+        warn.hidden = false;
+        warn.textContent = "No se pudo consultar el servicio de resultados.";
+      }
+    }
+    refresh();
+    setInterval(refresh, 1500);
+  </script>
+</body>
+</html>

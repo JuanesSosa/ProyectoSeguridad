@@ -1,0 +1,152 @@
+# =============================================================================
+# PROYECTO 03 – Aplicación multicontenedor con Docker Compose
+# Infraestructura y Seguridad Computacional – Universidad de Ibagué
+#
+# Aplicación: votación "Gatos vs Perros"
+#
+#   Navegador ──► vote (Python) ──► redis ──► worker (Python) ──┬─► db (PostgreSQL)
+#                                                               └─► mongo (MongoDB)
+#   Navegador ──► result (Node.js) ◄── lee de db (PostgreSQL) y mongo (MongoDB)
+#
+# Uso:   cp .env.example .env   (y ajustar DOCKERHUB_USER y contraseñas)
+#        docker compose up -d --build
+#        vote:   http://localhost:5000        result: http://localhost:5001
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# SERVICIOS  (criterio 2: se definen 6 servicios, el mínimo exigido es 3)
+# ---------------------------------------------------------------------------
+services:
+
+  # --- Contenedor WEB (Python / Flask) --------------------------------------
+  vote:
+    build: ./vote                                    # construye la imagen con vote/Dockerfile
+    image: ${DOCKERHUB_USER:-usuario}/proyecto03-vote:1.0   # nombre con el que se publica en Docker Hub
+    environment:
+      REDIS_HOST: redis                              # ENLACE: se conecta por el nombre del servicio
+      OPTION_A: Gatos
+      OPTION_B: Perros
+    ports:
+      - "5000:80"                                    # PUERTO: host 5000 -> contenedor 80 (web de votación)
+    depends_on:
+      redis:
+        condition: service_healthy                   # ENLACE: arranca cuando Redis responde
+    networks:
+      - front-tier                                   # RED: visible desde el navegador
+      - back-tier                                    # RED: para llegar a Redis
+    restart: unless-stopped
+
+  # --- Contenedor para VISUALIZAR resultados (Node.js / Express) ------------
+  result:
+    build: ./result
+    image: ${DOCKERHUB_USER:-usuario}/proyecto03-result:1.0
+    environment:
+      POSTGRES_HOST: db                              # ENLACE: PostgreSQL por nombre de servicio
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-votacion}
+      MONGO_URL: mongodb://mongo:27017               # ENLACE: MongoDB por nombre de servicio
+      MONGO_DB: ${POSTGRES_DB:-votacion}
+      OPTION_A: Gatos
+      OPTION_B: Perros
+    ports:
+      - "5001:80"                                    # PUERTO: host 5001 -> contenedor 80 (resultados)
+    depends_on:
+      db:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - front-tier
+      - back-tier
+    restart: unless-stopped
+
+  # --- Contenedor de PROCESAMIENTO de resultados (Python) -------------------
+  worker:
+    build: ./worker
+    image: ${DOCKERHUB_USER:-usuario}/proyecto03-worker:1.0
+    environment:
+      REDIS_HOST: redis
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-votacion}
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DB: ${POSTGRES_DB:-votacion}
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - back-tier                                    # solo red interna: no es accesible desde fuera
+    restart: unless-stopped
+
+  # --- Base de datos en memoria: cola de votos (Redis) ----------------------
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"] # persistencia AOF en /data
+    volumes:
+      - redis-data:/data                             # VOLUMEN 1: la cola sobrevive a reinicios
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - back-tier
+    restart: unless-stopped
+
+  # --- Base de datos relacional (PostgreSQL) --------------------------------
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-votacion}
+    volumes:
+      - db-data:/var/lib/postgresql/data             # VOLUMEN 2: datos de PostgreSQL
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-votacion}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - back-tier
+    restart: unless-stopped
+
+  # --- Base de datos de documentos (MongoDB) --------------------------------
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db                          # VOLUMEN 3: datos de MongoDB
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - back-tier
+    restart: unless-stopped
+
+# ---------------------------------------------------------------------------
+# VOLÚMENES  (criterio 4: 3 volúmenes con nombre, uno por base de datos)
+# ---------------------------------------------------------------------------
+volumes:
+  redis-data:
+  db-data:
+  mongo-data:
+
+# ---------------------------------------------------------------------------
+# REDES  (criterio 6)
+#    front-tier: lo que el usuario alcanza (vote y result)
+#    back-tier : comunicación interna con Redis, PostgreSQL y MongoDB
+# ---------------------------------------------------------------------------
+networks:
+  front-tier:
+    driver: bridge
+  back-tier:
+    driver: bridge

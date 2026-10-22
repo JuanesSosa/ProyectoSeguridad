@@ -1,0 +1,22 @@
+PROYECTO 03 – Aplicación multicontenedor con Docker Compose
+Infraestructura y Seguridad Computacional – Grupo 02 – 2026B
+
+Integrantes:
+- Juan Esteban Sosa – 2220242042
+- (completar)
+- (completar)
+- (completar)
+- (completar)
+
+GitHub (repositorio público con docker-compose.yml y el código):
+https://github.com/<USUARIO>/proyecto03-multicontenedor
+
+Docker Hub (imágenes publicadas):
+https://hub.docker.com/r/<USUARIO_DOCKERHUB>/proyecto03-vote
+https://hub.docker.com/r/<USUARIO_DOCKERHUB>/proyecto03-result
+https://hub.docker.com/r/<USUARIO_DOCKERHUB>/proyecto03-worker
+
+Descarga de las imágenes:
+docker pull <USUARIO_DOCKERHUB>/proyecto03-vote:1.0
+docker pull <USUARIO_DOCKERHUB>/proyecto03-result:1.0
+docker pull <USUARIO_DOCKERHUB>/proyecto03-worker:1.0

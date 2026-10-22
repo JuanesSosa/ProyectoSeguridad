@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Votación – Proyecto 03</title>
+  <style>
+    :root { --bg:#12161c; --card:#1b222c; --ink:#f0f2f4; --muted:#9aa4b2; --green:#39d353; --amber:#f2a65a; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:var(--bg); color:var(--ink);
+           font-family: system-ui, -apple-system, "Segoe UI", sans-serif; padding:16px; }
+    main { width:100%; max-width:520px; background:var(--card); border-radius:14px; padding:28px; }
+    h1 { margin:0 0 4px; font-size:1.5rem; }
+    p.sub { margin:0 0 24px; color:var(--muted); }
+    form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    button { font:inherit; font-size:1.1rem; font-weight:600; padding:18px; border-radius:10px; border:2px solid #2a3342;
+             background:#222b38; color:var(--ink); cursor:pointer; }
+    button:hover { border-color:var(--green); }
+    button.selected { border-color:var(--green); background:#1f3a2a; }
+    .msg { margin-top:18px; color:var(--green); }
+    .err { margin-top:18px; color:var(--amber); }
+    footer { margin-top:24px; font-size:.8rem; color:var(--muted); }
+    a { color:var(--green); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>¿{{ option_a }} o {{ option_b }}?</h1>
+    <p class="sub">Servicio web en Python (Flask)</p>
+    <form method="POST" action="/">
+      <button name="vote" value="{{ option_a }}" class="{{ 'selected' if vote == option_a }}">{{ option_a }}</button>
+      <button name="vote" value="{{ option_b }}" class="{{ 'selected' if vote == option_b }}">{{ option_b }}</button>
+    </form>
+    {% if error %}<p class="err">{{ error }}</p>
+    {% elif vote %}<p class="msg">Tu voto actual: <strong>{{ vote }}</strong></p>{% endif %}
+    <footer>Contenedor: {{ hostname }} · <a href="http://localhost:5001" target="_blank" rel="noopener">Ver resultados</a></footer>
+  </main>
+</body>
+</html>

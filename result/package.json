@@ -1,0 +1,15 @@
+{
+  "name": "resultados-proyecto03",
+  "version": "1.0.0",
+  "description": "Servicio Node.js que visualiza los resultados de la votación",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "4.22.3",
+    "mongodb": "6.8.0",
+    "pg": "8.12.0"
+  },
+  "license": "MIT"
+}
