@@ -12,11 +12,11 @@ GitHub (repositorio público con docker-compose.yml y el código):
 https://github.com/<USUARIO>/proyecto03-multicontenedor
 
 Docker Hub (imágenes publicadas):
-https://hub.docker.com/r/<USUARIO_DOCKERHUB>/proyecto03-vote
-https://hub.docker.com/r/<USUARIO_DOCKERHUB>/proyecto03-result
-https://hub.docker.com/r/<USUARIO_DOCKERHUB>/proyecto03-worker
+https://hub.docker.com/r/juanessosa/proyecto03-vote
+https://hub.docker.com/r/juanessosa/proyecto03-result
+https://hub.docker.com/r/juanessosa/proyecto03-worker
 
 Descarga de las imágenes:
-docker pull <USUARIO_DOCKERHUB>/proyecto03-vote:1.0
-docker pull <USUARIO_DOCKERHUB>/proyecto03-result:1.0
-docker pull <USUARIO_DOCKERHUB>/proyecto03-worker:1.0
+docker pull juanessosa/proyecto03-vote:1.0
+docker pull juanessosa/proyecto03-result:1.0
+docker pull juanessosa/proyecto03-worker:1.0
