@@ -3,10 +3,6 @@ Infraestructura y Seguridad Computacional – Grupo 02 – 2026B
 
 Integrantes:
 - Juan Esteban Sosa – 2220242042
-- (completar)
-- (completar)
-- (completar)
-- (completar)
 
 GitHub (repositorio público con docker-compose.yml y el código):
 https://github.com/<USUARIO>/proyecto03-multicontenedor
